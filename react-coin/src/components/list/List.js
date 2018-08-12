@@ -1,4 +1,9 @@
 import React, { Component } from "react";
+import { handleResponse } from "../../helpers";
+import { API_URL } from "../../config";
+import "./Table.css";
+import Loading from "../common/loading";
+import Table from "./table.js";
 
 class List extends Component {
   state = {};
@@ -8,27 +13,51 @@ class List extends Component {
     this.state = {
       loading: false,
       currencies: [],
+      totalPages: 0,
+      page: 1,
       error: null
     };
   }
 
+  renderChangePercent(percent) {
+    if (percent > 0) {
+      return <span className="percent-raised">{percent}% &uarr;</span>;
+    } else if (percent < 0) {
+      return <span className="percent-fallen">{percent}% &darr;</span>;
+    } else {
+      return <span>{percent}%</span>;
+    }
+  }
+
   render() {
     console.log(this.state);
-    if (this.state.loading) {
-      return <div>Loading...</div>;
+    const { loading, error, currencies } = this.state;
+
+    if (loading) {
+      return (
+        <div className="Loading-container">
+          <Loading />
+        </div>
+      );
     }
-    return <div>test</div>;
+
+    if (error) {
+      return <div className="error">{error}</div>;
+    }
+
+    return (
+      <Table
+        currencies={currencies}
+        renderChangePercent={this.renderChangePercent}
+      />
+    );
   }
 
   componentWillMount() {
     this.setState({ loading: true });
 
-    fetch("https://api.udilia.com/coins/v1/cryptocurrencies?page=1&perPage=20")
-      .then(response => {
-        return response.json().then(json => {
-          return response.ok ? json : Promise.reject(json);
-        });
-      })
+    fetch(`${API_URL}/cryptocurrencies?page=1&perPage=20`)
+      .then(handleResponse)
       .then(data => {
         this.setState({ currencies: data.currencies, loading: false });
       })
