@@ -4,6 +4,7 @@ import { API_URL } from "../../config";
 import "./Table.css";
 import Loading from "../common/loading";
 import Table from "./table.js";
+import Pagination from "./pagination";
 
 class List extends Component {
   state = {};
@@ -28,10 +29,34 @@ class List extends Component {
       return <span>{percent}%</span>;
     }
   }
+  handlePaginationClick = direction => {
+    let nextPage = this.state.page;
+    nextPage = direction === "next" ? nextPage + 1 : nextPage - 1;
+    this.setState({ page: nextPage }, () => {
+      this.fetchCurrencies();
+    });
+  };
 
+  fetchCurrencies() {
+    this.setState({ loading: true });
+    const { page } = this.state;
+
+    fetch(`${API_URL}/cryptocurrencies?page=${page}&perPage=20`)
+      .then(handleResponse)
+      .then(data => {
+        this.setState({
+          currencies: data.currencies,
+          loading: false,
+          totalPages: data.totalPages
+        });
+      })
+      .catch(error => {
+        this.setState({ error: error.errorMessage, loading: false });
+      });
+  }
   render() {
     console.log(this.state);
-    const { loading, error, currencies } = this.state;
+    const { loading, error, currencies, page, totalPages } = this.state;
 
     if (loading) {
       return (
@@ -46,24 +71,22 @@ class List extends Component {
     }
 
     return (
-      <Table
-        currencies={currencies}
-        renderChangePercent={this.renderChangePercent}
-      />
+      <div>
+        <Table
+          currencies={currencies}
+          renderChangePercent={this.renderChangePercent}
+        />
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          handlePaginationClick={this.handlePaginationClick}
+        />
+      </div>
     );
   }
 
   componentWillMount() {
-    this.setState({ loading: true });
-
-    fetch(`${API_URL}/cryptocurrencies?page=1&perPage=20`)
-      .then(handleResponse)
-      .then(data => {
-        this.setState({ currencies: data.currencies, loading: false });
-      })
-      .catch(error => {
-        this.setState({ error: error.errorMessage, loading: false });
-      });
+    this.fetchCurrencies();
   }
 }
 
