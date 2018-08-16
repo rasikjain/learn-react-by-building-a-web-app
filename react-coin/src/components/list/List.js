@@ -46,7 +46,7 @@ class List extends Component {
       });
   }
   render() {
-    console.log(this.state);
+    //console.log(this.state);
     const { loading, error, currencies, page, totalPages } = this.state;
 
     if (loading) {
